@@ -23,6 +23,7 @@ class OfficeController extends Controller
         ->when(request('host_id'), fn ($builder) => $builder->whereUserId(request('host_id')))
         ->when(request('user_id'), fn ($builder) => $builder->whereRelation('reservations','user_id', '=', request('user_id')))
         ->where('hidden',false)
+        ->with(['images','tags','user'])
         ->latest('id')
         ->paginate(20);
 
