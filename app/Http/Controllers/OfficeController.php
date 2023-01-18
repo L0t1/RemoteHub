@@ -20,12 +20,12 @@ class OfficeController extends Controller
     {
         $offices = Office::query()
         ->where('approval_status', Office::APPROVAL_APPROVED)
+        ->when(request('host_id'), fn ($builder) => $builder->whereUserId(request('host_id')))
         ->where('hidden',false)
         ->latest('id')
         ->paginate(20);
 
         return OfficeResource::collection(
-
             $offices
         );
     }
