@@ -20,7 +20,7 @@ class OfficeController extends Controller
     {
         $offices = Office::query()
         ->latest('id')
-        ->get();
+        ->paginate(20);
 
         return OfficeResource::collection(
 

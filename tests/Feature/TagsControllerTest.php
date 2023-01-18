@@ -9,8 +9,6 @@ use Tests\TestCase;
 
 class TagsControllerTest extends TestCase
 {
-    use LazilyRefreshDatabase;
-
     /**
      * @test
      */
