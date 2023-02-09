@@ -4,18 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\OfficeResource;
 use App\Models\Office;
+use App\Models\Reservation;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class OfficeController extends Controller
-{   
+{
     public function __invoke()
 {
     return $this->index();
 }
 
-    
+
     public function index(): AnonymousResourceCollection
     {
         $offices = Office::query()
@@ -24,9 +25,9 @@ class OfficeController extends Controller
         ->when(request('user_id'), fn ($builder) => $builder->whereRelation('reservations','user_id', '=', request('user_id')))
         ->where('hidden',false)
         ->with(['images','tags','user'])
+        ->withCount(['reservations' => fn ($builder) => $builder->where('status',Reservation::STATUS_ACTIVE)])
         ->latest('id')
         ->paginate(20);
-
         return OfficeResource::collection(
             $offices
         );
