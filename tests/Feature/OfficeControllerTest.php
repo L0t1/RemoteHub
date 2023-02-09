@@ -127,7 +127,7 @@ class OfficeControllerTest extends TestCase
         $this->assertEquals(1, $response->json('data')[0]['reservations_count']);
     }
 
-/**
+    /**
      * @test
      */
     public function itOrdersByDistanceWhenCoordinatesAreProvided()
@@ -155,5 +155,30 @@ class OfficeControllerTest extends TestCase
         $response->assertOk();
         $this->assertEquals('Leiria', $response->json('data')[0]['title']);
         $this->assertEquals('Torres Vedras', $response->json('data')[1]['title']);
+    }
+
+    /**
+     * @test
+     */
+    public function itShowsTheOffice()
+    {
+        $user = User::factory()->create();
+        $tag = Tag::factory()->create();
+        $office = Office::factory()->for($user)->create();
+
+        $office->tags()->attach($tag);
+        $office->images()->create(['path' => 'image.jpg']);
+
+        Reservation::factory()->for($office)->create(['status' => Reservation::STATUS_ACTIVE]);
+        Reservation::factory()->for($office)->create(['status' => Reservation::STATUS_CANCELLED]);
+
+        $response = $this->get('/api/offices/'.$office->id);
+
+        $this->assertEquals(1, $response->json('data')[0]['reservations_count']);
+        $this->assertIsArray($response->json('data')[0]['tags']);
+        $this->assertCount(1, $response->json('data')[0]['tags']);
+        $this->assertIsArray($response->json('data')[0]['images']);
+        $this->assertCount(1, $response->json('data')[0]['images']);
+        $this->assertEquals($user->id, $response->json('data')[0]['user']['id']);
     }
 }
