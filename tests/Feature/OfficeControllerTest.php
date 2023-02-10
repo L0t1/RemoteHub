@@ -50,7 +50,7 @@ class OfficeControllerTest extends TestCase
     /**
      * @test
      */
-    public function itFiltersByHostId()
+    public function itFiltersByUserId()
     {
         Office::factory(3)->create();
 
@@ -58,7 +58,7 @@ class OfficeControllerTest extends TestCase
         $office = Office::factory()->for($host)->create();
 
         $response = $this->get(
-            '/api/offices?host_id='.$host->id
+            '/api/offices?user_id='.$host->id
         );
 
         $response->assertOk();
@@ -69,7 +69,7 @@ class OfficeControllerTest extends TestCase
     /**
      * @test
      */
-    public function itFiltersByUserId()
+    public function itFiltersByVisitorId()
     {
         Office::factory(3)->create();
 
@@ -80,7 +80,7 @@ class OfficeControllerTest extends TestCase
         Reservation::factory()->for($office)->for($user)->create();
 
         $response = $this->get(
-            '/api/offices?user_id='.$user->id
+            '/api/offices?visitor_id='.$user->id
         );
 
         $response->assertOk();
