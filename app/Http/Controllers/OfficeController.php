@@ -10,6 +10,7 @@ use App\Http\Resources\OfficeResource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class OfficeController extends Controller
 {
@@ -73,11 +74,14 @@ class OfficeController extends Controller
 
         $attributes['approval_status'] = Office::APPROVAL_PENDING;
 
-        $office = auth()->user()->offices()->create(
-            Arr::except($attributes, ['tags'])
-        );
+        $office = DB::transaction(function() use ($attributes){
+            $office = auth()->user()->offices()->create(
+                Arr::except($attributes, ['tags'])
+            );
 
-        $office->tags()->sync($attributes['tags']);
+            $office->tags()->attach($attributes['tags']);
+            return $office;
+        });
 
         return OfficeResource::make(
             $office->load(['images','tags','user'])
