@@ -2,14 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Models\Tag;
+use Tests\TestCase;
+use App\Models\User;
 use App\Models\Image;
 use App\Models\Office;
 use App\Models\Reservation;
-use App\Models\Tag;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
+use Illuminate\Http\Response;
 use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class OfficeControllerTest extends TestCase
 {
@@ -229,5 +231,18 @@ class OfficeControllerTest extends TestCase
         ]);
 
         $response->assertStatus(403);
+    }
+    /**
+     * @test
+     */
+    public function itAllowsCreatingIfScopeIsProvided()
+    {
+        $user = User::factory()->create();
+
+        Sanctum::actingAs($user, ['office.create']);
+
+        $response = $this->postJson('/api/offices');
+
+        $this->assertNotEquals(Response::HTTP_FORBIDDEN, $response->status());
     }
 }
