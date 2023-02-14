@@ -199,7 +199,7 @@ class OfficeControllerTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('data.approval_status', Office::APPROVAL_PENDING)
-            ->assertJsonPath('data.reservations_count', null)
+            ->assertJsonPath('data.reservations_count', 0)
             ->assertJsonPath('data.user.id', $user->id)
             ->assertJsonCount(2, 'data.tags');
 
@@ -220,7 +220,7 @@ class OfficeControllerTest extends TestCase
             'Authorization' => 'Bearer '.$token->plainTextToken
         ]);
 
-        $response->assertStatus(403);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
     /**
      * @test
@@ -261,5 +261,23 @@ class OfficeControllerTest extends TestCase
             ->assertJsonPath('data.tags.0.id', $tags[0]->id)
             ->assertJsonPath('data.tags.1.id', $anotherTag->id)
             ->assertJsonPath('data.title', 'Amazing Office');
+    }
+
+     /**
+     * @test
+     */
+    public function itDoesntUpdateOfficeThatDoesntBelongToUser()
+    {
+        $user = User::factory()->create();
+        $anotherUser = User::factory()->create();
+        $office = Office::factory()->for($anotherUser)->create();
+
+        $this->actingAs($user);
+
+        $response = $this->putJson('/api/offices/'.$office->id, [
+            'title' => 'Amazing Office'
+        ]);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 }
