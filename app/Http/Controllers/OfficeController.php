@@ -57,25 +57,29 @@ class OfficeController extends Controller
         abort_unless(auth()->user()->tokenCan('office.create'),
             Response::HTTP_FORBIDDEN
         );
+
         $attributes = (new OfficeValidator())->validate(
             $office = new Office(),
-        request()->all());
+            request()->all()
+        );
 
         $attributes['approval_status'] = Office::APPROVAL_PENDING;
         $attributes['user_id'] = auth()->id();
 
-        $office = DB::transaction(function() use ($office,$attributes){
+        $office = DB::transaction(function () use ($office, $attributes) {
             $office->fill(
                 Arr::except($attributes, ['tags'])
             )->save();
 
-            $office->tags()->attach($attributes['tags']);
+            if (isset($attributes['tags'])) {
+                $office->tags()->attach($attributes['tags']);
+            }
 
             return $office;
         });
 
         return OfficeResource::make(
-            $office->load(['images','tags','user'])
+            $office->load(['images', 'tags', 'user'])
         );
     }
 

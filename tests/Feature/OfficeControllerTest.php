@@ -188,35 +188,25 @@ class OfficeControllerTest extends TestCase
      */
     public function itCreatesAnOffice()
     {
-        $user = User::factory()->createQuietly();
-        $tag = Tag::factory()->create();
-        $tag2 = Tag::factory()->create();
+        $user = User::factory()->create();
+        $tags = Tag::factory(2)->create();
 
         $this->actingAs($user);
 
-        $response = $this->postJson('/api/offices', [
-            'title' => 'Office in Arkansas',
-            'description' => 'Description',
-            'lat' => '39.74051727562952',
-            'lng' => '-8.770375324893696',
-            'address_line1' => 'address',
-            'price_per_day' => 10_000,
-            'monthly_discount' => 5,
-            'tags' => [
-                $tag->id, $tag2->id
-            ]
-        ]);
-        $response->assertCreated()
-        ->assertJsonPath('data.title', 'Office in Arkansas')
-        ->assertJsonPath('data.approval_status', Office::APPROVAL_PENDING)
-        ->assertJsonPath('data.user.id', $user->id)
-        ->assertJsonCount(2,'data.tags');
+        $response = $this->postJson('/api/offices', Office::factory()->raw([
+            'tags' => $tags->pluck('id')->toArray()
+        ]));
 
-        $this->assertDatabaseHas('offices',[
-            'title' => 'Office in Arkansas'
+        $response->assertCreated()
+            ->assertJsonPath('data.approval_status', Office::APPROVAL_PENDING)
+            ->assertJsonPath('data.reservations_count', null)
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonCount(2, 'data.tags');
+
+        $this->assertDatabaseHas('offices', [
+            'id' => $response->json('data.id')
         ]);
     }
-
     /**
      * @test
      */
@@ -244,5 +234,32 @@ class OfficeControllerTest extends TestCase
         $response = $this->postJson('/api/offices');
 
         $this->assertNotEquals(Response::HTTP_FORBIDDEN, $response->status());
+    }
+
+    /**
+     * @test
+     */
+    public function itUpdatesAnOffice()
+    {
+        $user = User::factory()->create();
+        $tags = Tag::factory(3)->create();
+        $office = Office::factory()->for($user)->create();
+
+        $office->tags()->attach($tags);
+
+        $this->actingAs($user);
+
+        $anotherTag = Tag::factory()->create();
+
+        $response = $this->putJson('/api/offices/'.$office->id, [
+            'title' => 'Amazing Office',
+            'tags' => [$tags[0]->id, $anotherTag->id]
+        ]);
+
+        $response->assertOk()
+            ->assertJsonCount(2, 'data.tags')
+            ->assertJsonPath('data.tags.0.id', $tags[0]->id)
+            ->assertJsonPath('data.tags.1.id', $anotherTag->id)
+            ->assertJsonPath('data.title', 'Amazing Office');
     }
 }
