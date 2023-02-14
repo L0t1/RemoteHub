@@ -95,7 +95,9 @@ class OfficeController extends Controller
                 Arr::except($attributes, ['tags'])
             );
 
-            $office->tags()->sync($attributes['tags']);
+            if (isset($attributes['tags'])) {
+                $office->tags()->sync($attributes['tags']);
+            }
         });
 
         return OfficeResource::make(
